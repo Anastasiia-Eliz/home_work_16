@@ -1,14 +1,12 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from app import db
 from sqlalchemy.orm import relationship
-import data
-from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///mybase.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+
 
 
 class User(db.Model):
@@ -32,6 +30,9 @@ class User(db.Model):
 			"phone": self.phone,
 		}
 
+
+
+
 class Offer(db.Model):
 	__tablename__ = "offer"
 	id = db.Column(db.Integer, primary_key=True)
@@ -39,6 +40,15 @@ class Offer(db.Model):
 	executor_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 	order = relationship("Order", foreign_keys=[order_id])
 	executor = relationship("User", foreign_keys=[executor_id])
+
+	def to_dict(self):
+		return {
+			"id": self.id,
+			"order_id": self.order_id,
+			"executor_id": self.executor_id,
+		}
+
+
 
 
 class Order(db.Model):
@@ -55,45 +65,21 @@ class Order(db.Model):
 	customer = relationship("User", foreign_keys=[customer_id])
 	executor = relationship("User", foreign_keys=[executor_id])
 
+	def to_dict(self):
+		return {
+			"id": self.id,
+			"name": self.name,
+			"description": self.description,
+			"start_date": self.start_date,
+			"end_date": self.end_date,
+			"address": self.address,
+			"price": self.price,
+			"customer_id": self.customer_id,
+			"executor_id": self.executor_id,
 
-db.create_all()
+		}
 
-for user in data.USERS:
-	db.session.add(User(
-		id=user['id'],
-		first_name=user['first_name'],
-		last_name=user['last_name'],
-		age=user['age'],
-		email=user['email'],
-		role=user['role'],
-		phone=user['phone'])
-	)
-	db.session.commit()
-
-for order in data.ORDER:
-	db.session.add(Order(
-		id=order['id'],
-		name=order['name'],
-		description=order['description'],
-		start_date=datetime.strptime(order['start_date'], '%m/%d/%Y'),
-		end_date=datetime.strptime(order['end_date'], '%m/%d/%Y'),
-		address=order['address'],
-		price=order['price'],
-		customer_id=order['customer_id'],
-		executor_id=order['executor_id']
-	))
-	db.session.commit()
-
-for offer in data.OFFER:
-	db.session.add(Offer(
-		id=offer['id'],
-		order_id=offer['order_id'],
-		executor_id=offer['executor_id']
-	))
-
-	db.session.commit()
-
-db.session.close()
 
 
 
+db.create_all()
